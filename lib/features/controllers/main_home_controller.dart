@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class HomeController extends GetxController {
+class HomeController extends GetxController with WidgetsBindingObserver {
   // Reactive variable for selected index
   var selectedIndex = 0.obs;
   
@@ -24,18 +24,58 @@ class HomeController extends GetxController {
       curve: Curves.easeIn,
     );
   }
+  setonline(){
+    FirebaseFirestore.instance.collection("users").doc(FirebaseAuth.instance.currentUser!.uid).set({"is_online":true},SetOptions(merge: true));
+
+  }
   @override
   void onInit() {
-    getdata();
     super.onInit();
+    setonline();
+    getdata();
+    WidgetsBinding.instance.addObserver(this);
   }
-  getdata()async{
-    var data=await FirebaseFirestore.instance.collection("users").doc(FirebaseAuth.instance.currentUser!.uid).get();
-    print("data: "+jsonEncode(data.data()));
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getdata() {
+    return FirebaseFirestore.instance
+        .collection("users")
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .snapshots();
+  }
+
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive||state==AppLifecycleState.detached) {
+      // App is going into the background
+      onAppClose();
+    }
+    if(state==AppLifecycleState.resumed){
+      setonline();
+    }
+  }
+
+
+  Future<void> onAppClose() async {
+    // Your function to execute before the app goes into the background
+    print("App is closing or going into the background...");
+
+    // Update Firestore
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .set({"is_online": false}, SetOptions(merge: true));
+    }
   }
   @override
-  void onClose() {
+  void onClose(){
     pageController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    onAppClose();
+    print("close closing");
     super.onClose();
   }
 }

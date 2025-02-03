@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:whatsapp_clone_practice/features/app/home/home_page.dart';
+import 'package:whatsapp_clone_practice/features/services/cloudinary/cloudinary_services.dart';
 import '../app/const/app_const.dart';
 
 class LoginPageController extends GetxController{
@@ -41,17 +42,20 @@ class LoginPageController extends GetxController{
   // profile page
   final TextEditingController usernameController=TextEditingController();
   final TextEditingController userlastnameController=TextEditingController();
-  Rx<XFile>? image;
+  XFile? image;
   Future selectimage()async{
     try{
       XFile? file =await ImagePicker().pickImage(source: ImageSource.gallery);
         if(file!=null){
-          image!.value=file;
+          image=file;
+          // print(image!.path);
+          update();
         }else{
           print("photo is not selected");
         }
     }catch(e){
       toast(message: "some error occurred $e");
+      print(e);
     }
   }
 
@@ -60,8 +64,8 @@ class LoginPageController extends GetxController{
   Future<void> signUpWithEmail() async {
     issendingotp.value=true;
     try {
-      print(signupemail);
-      print(signuppassword);
+      // print(signupemail);
+      // print(signuppassword);
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: signupemail.text.trim(),
         password: signuppassword.text.trim(),
@@ -69,9 +73,16 @@ class LoginPageController extends GetxController{
 
       User? user = userCredential.user;
       if (user != null) {
-         Get.snackbar('Sign-up successful!', "enjoy to chat with your friend.");
-         storeuserdata();
+          if(image!=null) {
+            final obj=CloudinaryServices();
+            String? url=await obj.uploadImage(filePath: image!.path, folderName: "whatsapp");
+         storeuserdata(url: url);
+          }else{
+            storeuserdata();
+
+          }
          issendingotp.value=false;
+         Get.snackbar('Sign-up successful!', "enjoy to chat with your friend.");
          Get.offAll(HomePage());
       }
          issendingotp.value=false;
@@ -105,7 +116,7 @@ class LoginPageController extends GetxController{
       return userCredential;
     }
 
-  storeuserdata({bool isgoogle=false,User? user}) async {
+  storeuserdata({bool isgoogle=false,User? user,String? url}) async {
     DocumentReference store = await firestore
         .collection("users")
         .doc(FirebaseAuth.instance.currentUser!.uid);
@@ -119,7 +130,7 @@ class LoginPageController extends GetxController{
       "push_token":"",
       "email": isgoogle?user!.email:signupemail.text.trim(),
       "password": isgoogle?"":signuppassword.text.trim(),
-      "imgurl": isgoogle?user!.photoURL:"",
+      "imgurl": isgoogle?user!.photoURL:image==null?"":url==null?"":url,
       "id": FirebaseAuth.instance.currentUser!.uid,
       "phone_number":isgoogle?user!.phoneNumber:phonenumber.text.trim()
     });

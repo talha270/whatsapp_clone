@@ -9,12 +9,12 @@ Widget Profilewidget({String? imageurl,XFile? image}){
     if(imageurl==null||imageurl==""){
       return Image.asset("assets/profile_default.png",fit: BoxFit.contain,);
     }else{
-      return CachedNetworkImage(imageUrl: imageurl,fit: BoxFit.contain,
+      return CachedNetworkImage(imageUrl: imageurl,fit: BoxFit.cover,
       progressIndicatorBuilder: (context, url, progress) => const CircularProgressIndicator(color: tabColor,),
       errorWidget: (context, url, error) => Image.asset("assets/profile_default.png",fit: BoxFit.contain,),
       );
     }
   }else{
-    return Image.file(File(image.path),fit: BoxFit.contain,);
+    return Image.file(File(image.path),fit: BoxFit.cover,);
   }
 }

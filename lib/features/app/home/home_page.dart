@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
 
   HomePage({super.key});
 
-  final HomeController controller = Get.put(HomeController());
+  final HomeController controller = Get.put(HomeController(),permanent: true);
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +104,7 @@ class HomePage extends StatelessWidget {
         color: appBarColor,
         onSelected: (value) {
           if (value == "Settings") {
-            Get.to(() => const SettingsPages());
+            Get.to(() => SettingsPages());
           }
         },
         itemBuilder: (context) => <PopupMenuEntry<String>>[

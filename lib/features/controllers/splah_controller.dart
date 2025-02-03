@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:whatsapp_clone_practice/features/app/home/home_page.dart';
+import 'package:whatsapp_clone_practice/features/user/presentation/pages/inital_profile_submit_page.dart';
 import 'package:whatsapp_clone_practice/features/user/presentation/pages/signup_page.dart';
 
 class Splashcontroller extends GetxController {
@@ -17,7 +18,7 @@ class Splashcontroller extends GetxController {
     FirebaseAuth.instance.authStateChanges().listen(
           (user) {
         if (user == null) {
-          Get.offAll(SignupPage());
+          Get.offAll(InitalProfileSubmitPage());
         } else {
           Get.offAll(HomePage());
         }

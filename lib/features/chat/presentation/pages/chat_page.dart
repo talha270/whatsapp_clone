@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -72,6 +73,7 @@ class ChatPage extends StatelessWidget {
                     return GestureDetector(
                       onTap: () {
                         controller.chatid=contact.id;
+                        print(FirebaseAuth.instance.currentUser!.displayName);
                         Get.to(SingleChatPage());
                       },
                       child: ListTile(
@@ -83,8 +85,8 @@ class ChatPage extends StatelessWidget {
                             child: Profilewidget(),
                           ),
                         ),
-                        title:  Text("sddfdf"),
-                        subtitle: Text(contact["lastMessage"],maxLines: 1,overflow: TextOverflow.ellipsis,),
+                        title:  Text("fadjlfsa v"),
+                        subtitle:  Text(contact["lastMessage"],maxLines: 1,overflow: TextOverflow.ellipsis,),
                         trailing: Text(DateFormat.jm().format(contact["timestamp"]==null?DateTime.now():contact["timestamp"].toDate()), style: const TextStyle(color: greyColor, fontSize: 13)),
                       ),
                     );

@@ -34,17 +34,24 @@ final _formkey=GlobalKey<FormState>();
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         child: Column(
                           children: [
-                            // GestureDetector(
-                            //   onTap:() => controller.selectimage(),
-                            //   child: Container(
-                            //     height: 100,
-                            //     width: 100,
-                            //     child: ClipRRect(
-                            //       borderRadius: BorderRadius.circular(25),
-                            //       child: Profilewidget(image: controller.image==null?null:controller.image!.value),
-                            //     ),
-                            //   ),
-                            // ),
+                            GestureDetector(
+                              onTap:() => controller.selectimage(),
+                              child: Container(
+                                height: 100,
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.white38
+                                  ),
+                                  // color: Colors.red,
+                                  shape: BoxShape.circle
+                                ),
+                                child: GetBuilder<LoginPageController>(builder: (controller) {
+                                  return ClipOval(
+                                      child: Profilewidget(image: controller.image));
+                                },),
+                              ),
+                            ),
                             const SizedBox(height: 10,),
                             TextFormField(
                               validator: (value) {
@@ -207,21 +214,23 @@ final _formkey=GlobalKey<FormState>();
                         .value.phoneCode +
                         controller.phonenumber.text.trim();
                if(_formkey.currentState!.validate()&&controller.phonenumber.text.trim().isNotEmpty&&controller.issendingotp.value==false){
-                 controller.signUpWithEmail();
+                  controller.signUpWithEmail();
+               }else{
+                 Get.snackbar("Alert", "Fill all the field");
                }
               print(phoneNumber);
               },
               child: Container(
                 margin: const EdgeInsets.only(bottom: 20),
-                width: 120,
-                height: 40,
+                width: Get.width-50,
+                height: 50,
                 decoration: BoxDecoration(
                   color: tabColor,
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(70),
                 ),
                 child: Center(
                   child: Obx(() => controller.issendingotp.value? Container(
-                      padding: EdgeInsets.all(5),
+                      padding: EdgeInsets.all(10),
                       child: const CircularProgressIndicator()): const Text(
                     "Next",
                     style: TextStyle(
