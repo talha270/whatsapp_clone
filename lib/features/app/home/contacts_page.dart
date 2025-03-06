@@ -56,7 +56,7 @@ class Contactspage extends StatelessWidget {
                   children:  List.generate(contacts.length, (index) => GestureDetector(
                     onTap: () async{
                       controller.chatid = await controller.getOrCreateChatId(
-                          userId1: controller.currentUser!.uid, userId2: contacts[index]["id"].toString());
+                          userId1: controller.currentUser!.uid, userId2: contacts[index]["id"].toString(), user2name: "${contacts[index]["first_name"]} ${contacts[index]["last_name"]}");
                       Navigator.pop(context);
                       Get.to(SingleChatPage());
                     },

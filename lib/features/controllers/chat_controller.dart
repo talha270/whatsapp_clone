@@ -8,7 +8,38 @@ import 'package:whatsapp_clone_practice/features/chat/presentation/pages/single_
 import '../app/const/firebase_collection_const.dart';
 
 class ChatController extends GetxController {
+
   String chatid = "";
+  var username="".obs;
+  var otheruserid="".obs;
+  markAsSeen() async {
+    print("other"+otheruserid.value);
+    // print(chatid);
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection(FirebaseCollectionConst.chatscollection)
+          .doc(chatid)
+          .collection('messages')
+          .where("senderId", isEqualTo: otheruserid.value)
+          .where("status", isNotEqualTo:"seen")
+          .get();
+      print("size"+querySnapshot.size.toString());
+      if (querySnapshot.docs.isNotEmpty) {
+        final batch = FirebaseFirestore.instance.batch();
+
+        for (final doc in querySnapshot.docs) {
+          final docRef = doc.reference;
+          batch.update(docRef, {'status': 'seen'});
+        }
+
+        await batch.commit();
+        print('Successfully updated ${querySnapshot.size} messages to viewed');
+      }
+    } catch (e) {
+      print('Error updating message status: $e');
+      // Consider adding error handling/retry logic here
+    }
+  }
   static Rx<Country> selectedfiltereddialogcountry =
       CountryPickerUtils.getCountryByPhoneCode("92").obs;
   final currentUser = FirebaseAuth.instance.currentUser;
@@ -39,6 +70,14 @@ class ChatController extends GetxController {
         .doc(userId)
         .collection("contacts")
         .snapshots();
+  }
+  Future<QuerySnapshot> checkContactById(String userId) async {
+     return await firestore
+         .collection("users")
+         .doc(FirebaseAuth.instance.currentUser!.uid)
+         .collection("contacts")
+          .where("id",isEqualTo: userId)
+         .get();
   }
 
   Future<void> addContact() async {
@@ -82,7 +121,7 @@ class ChatController extends GetxController {
           .collection("users")
           .doc(currentUser!.uid)
           .collection("contacts")
-          .doc();
+          .doc(userDoc["id"]);
 
       await contactRef.set({
         "email": addemail.text.trim(),
@@ -100,7 +139,7 @@ class ChatController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
       chatid = await getOrCreateChatId(
-          userId1: currentUser!.uid, userId2: userDoc["id"]);
+          userId1: currentUser!.uid, userId2: userDoc["id"],user2name:"${userDoc["first_name"]} ${userDoc["last_name"]}");
       addingcontact.value = false;
       resetcontroller();
       Navigator.pop(Get.context!);
@@ -133,7 +172,7 @@ class ChatController extends GetxController {
       'senderId': currentUser!.uid,
       'text': senttext,
       'timestamp': FieldValue.serverTimestamp(),
-      'status': 'sent', // Status can be 'sent', 'delivered', or 'seen'
+      'status': 'send', // Status can be 'sent', 'delivered', or 'seen'
       'type': 'text', // Can be 'text', 'image', etc.
     });
     // Update the chat document with the last message
@@ -167,7 +206,7 @@ class ChatController extends GetxController {
   // create and get the chat id
   Future<String> getOrCreateChatId(
       {required String userId1,
-      required String userId2,}) async {
+      required String userId2,isgroup=false,required user2name}) async {
     final chatRef = FirebaseFirestore.instance.collection('chats');
     final query = await chatRef
         .where('participants', arrayContains: [userId1, userId2]).get();
@@ -176,11 +215,16 @@ class ChatController extends GetxController {
     //     .doc(FirebaseAuth.instance.currentUser!.uid)
     //     .get();
     if (query.docs.isEmpty) {
+      final currentuser=await FirebaseFirestore.instance.collection("users").doc(FirebaseAuth.instance.currentUser!.uid).get();
       final doc = await chatRef.add({
-        'isGroup': false,
+        'isGroup': isgroup,
         'participants': [userId1, userId2],
         'lastMessage': '',
         'timestamp': FieldValue.serverTimestamp(),
+        'names':{
+          userId1:"${currentuser["first_name"]} ${currentuser["last_name"]}",
+          userId2:user2name
+        }
       });
       return doc.id;
     } else {

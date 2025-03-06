@@ -8,6 +8,8 @@ import 'package:whatsapp_clone_practice/features/app/theme/style.dart';
 import 'package:whatsapp_clone_practice/features/chat/presentation/pages/single_chat_page.dart';
 import 'package:whatsapp_clone_practice/features/controllers/chat_controller.dart';
 
+import '../../../app/const/firebase_collection_const.dart';
+
 class ChatPage extends StatelessWidget {
   ChatPage({super.key});
 
@@ -67,32 +69,172 @@ class ChatPage extends StatelessWidget {
 
               return Expanded(
                 child: ListView.builder(
+                  shrinkWrap: true,
                   itemCount: contacts.length,
                   itemBuilder: (context, index) {
                     var contact = contacts[index];
-                    return GestureDetector(
-                      onTap: () {
-                        controller.chatid=contact.id;
-                        print(FirebaseAuth.instance.currentUser!.displayName);
-                        Get.to(SingleChatPage());
-                      },
-                      child: ListTile(
-                        leading: SizedBox(
-                          width: 50,
-                          height: 50,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(25),
-                            child: Profilewidget(),
-                          ),
-                        ),
-                        title:  Text("fadjlfsa v"),
-                        subtitle:  Text(contact["lastMessage"],maxLines: 1,overflow: TextOverflow.ellipsis,),
-                        trailing: Text(DateFormat.jm().format(contact["timestamp"]==null?DateTime.now():contact["timestamp"].toDate()), style: const TextStyle(color: greyColor, fontSize: 13)),
+
+                    return FutureBuilder<QuerySnapshot>(
+                      future: controller.checkContactById(
+                        contact["participants"][0] == FirebaseAuth.instance.currentUser!.uid
+                            ? contact["participants"][1]
+                            : contact["participants"][0],
                       ),
+                      builder: (context, secondsnapshot) {
+                        if (secondsnapshot.connectionState == ConnectionState.waiting) {
+                          return const SizedBox();
+                        }
+
+                        if (!secondsnapshot.hasData || secondsnapshot.data!.docs.isEmpty) {
+                          // Handle the case where the document doesn't exist
+                          return GestureDetector(
+                            onTap: () {
+                              controller.otheruserid.value = contact["participants"][0] == FirebaseAuth.instance.currentUser!.uid
+                                  ? contact["participants"][1]
+                                  : contact["participants"][0];
+
+                              controller.chatid = contact.id;
+                              controller.username.value= "Unknown User";
+                              // print(FirebaseAuth.instance.currentUser!.displayName);
+                              Get.to(SingleChatPage());
+                            },
+                            child: ListTile(
+                              leading: SizedBox(
+                                width: 50,
+                                height: 50,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(25),
+                                  child: Profilewidget(),
+                                ),
+                              ),
+                              title: Text("Unknown User"),
+                              subtitle: Text(contact["lastMessage"], maxLines: 1, overflow: TextOverflow.ellipsis),
+                              trailing:
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    DateFormat.jm().format(contact["timestamp"] == null ? DateTime.now() : contact["timestamp"].toDate()),
+                                    style: const TextStyle(color: greyColor, fontSize: 13),
+                                  ),
+                                  SizedBox(width: 10,),
+                                  StreamBuilder<QuerySnapshot>(
+                                    stream: countunseen(contact.id),
+                                    builder: (context, countersnapshot) {
+                                      if (countersnapshot.connectionState == ConnectionState.waiting) {
+                                        return SizedBox.shrink();
+                                      }
+
+                                      if (countersnapshot.data!.docs.length==0||!countersnapshot.hasData || countersnapshot.data == null) {
+                                        return SizedBox.shrink();
+                                      }
+
+                                      return Container(
+                                        height: 25,
+                                        width: 25,
+                                        decoration: BoxDecoration(
+                                          color: tabColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            countersnapshot.data!.docs.length.toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              overflow: TextOverflow.clip,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        final data = secondsnapshot.data!.docs.first;
+                        // as Map<String, dynamic>?;
+
+                        return GestureDetector(
+                          onTap: () {
+                            controller.otheruserid.value = contact["participants"][0] == FirebaseAuth.instance.currentUser!.uid
+                                ? contact["participants"][1]
+                                : contact["participants"][0];
+                            controller.chatid = contact.id;
+                            controller.username.value = "${data["first_name"]} ${data["last_name"]}";
+                            // print(FirebaseAuth.instance.currentUser!.displayName);
+                            Get.to(SingleChatPage());
+                          },
+                          child: ListTile(
+                            leading: SizedBox(
+                              width: 50,
+                              height: 50,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(25),
+                                child: Profilewidget(imageurl: data["imgurl"]),
+                              ),
+                            ),
+                            title: Text("${data["first_name"]} ${data["last_name"]}"),
+                            subtitle: Text(contact["lastMessage"], maxLines: 1, overflow: TextOverflow.ellipsis),
+                            trailing:
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  DateFormat.jm().format(contact["timestamp"] == null ? DateTime.now() : contact["timestamp"].toDate()),
+                                  style: const TextStyle(color: greyColor, fontSize: 13),
+                                ),
+                                SizedBox(width: 10,),
+                                StreamBuilder<QuerySnapshot>(
+                                  stream: countunseen(contact.id),
+                                  builder: (context, countersnapshot) {
+                                    if (countersnapshot.connectionState == ConnectionState.waiting) {
+                                      return SizedBox.shrink();
+                                    }
+
+                                    if (countersnapshot.data!.docs.length==0||!countersnapshot.hasData || countersnapshot.data == null) {
+                                      // print("null");
+                                      // print("0"+(countersnapshot.data!.docs.length==0).toString());
+                                      // print(!countersnapshot.hasData);
+                                      // print( countersnapshot.data == null);
+
+                                      return SizedBox.shrink();
+                                    }
+
+                                    return Container(
+                                      height: 25,
+                                      width: 25,
+                                      decoration: BoxDecoration(
+                                        color: tabColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          countersnapshot.data!.docs.length.toString(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            overflow: TextOverflow.clip,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
               );
+
+
             },
           ),
 
@@ -100,5 +242,17 @@ class ChatPage extends StatelessWidget {
       )
     );
   }
+  countunseen(chatid){
+    // print(chatid);
+    return FirebaseFirestore.instance
+        .collection(FirebaseCollectionConst.chatscollection)
+        .doc(chatid)
+        .collection('messages')
+        // .orderBy('timestamp', descending: false)
+        .where("senderId",isNotEqualTo: FirebaseAuth.instance.currentUser!.uid)
+        .where("status",isEqualTo: "send")
+        .snapshots();
+  }
+
 }
 

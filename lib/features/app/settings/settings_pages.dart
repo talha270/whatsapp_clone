@@ -111,6 +111,7 @@ class SettingsPages extends StatelessWidget {
                   description: "Logout from WhatsApp Clone",
                   icon: Icons.exit_to_app,
                   onTap: () {
+                    HomeController().onAppClose();
                     FirebaseAuth.instance.signOut();
                     GoogleSignIn().signOut();
                   }

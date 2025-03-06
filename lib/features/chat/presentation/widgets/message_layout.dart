@@ -36,7 +36,7 @@ messagelayout({
                     padding: EdgeInsets.only(left: 5,right: 85,top: 5,bottom: 5),
                     constraints: BoxConstraints(maxWidth: Get.width * 0.8),
                     decoration: BoxDecoration(
-                      color: messageColor,
+                      color: messageBgColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

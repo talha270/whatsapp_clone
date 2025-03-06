@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:whatsapp_clone_practice/features/app/theme/style.dart';
 import 'package:whatsapp_clone_practice/features/chat/presentation/widgets/message_layout.dart';
 import 'package:whatsapp_clone_practice/features/controllers/chat_controller.dart';
+import 'package:whatsapp_clone_practice/features/controllers/main_home_controller.dart';
 
 import '../widgets/attachwindowitem.dart';
 
@@ -16,14 +17,27 @@ class SingleChatPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Column(
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('UserName'),
-              Text(
-                "Online",
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
-              )
+              Obx(()=> Text(controller.username.value)),
+              StreamBuilder(stream: HomeController.getotheruserdata(controller.otheruserid.value),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    return SizedBox.shrink();
+                    } else if (snapshot.hasError) {
+                    return Text("Offline", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),);
+                    } else if (!snapshot.hasData || !snapshot.data!.exists) {
+                    return Text("Offline", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),);
+                    }else{
+                      final data=snapshot.data!.data();
+                      return  Text(
+                        data!["is_online"]?"Online":"Offline",
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+                      );
+                    }
+                  },),
+
             ],
           ),
           actions: [
@@ -77,6 +91,7 @@ class SingleChatPage extends StatelessWidget {
                         } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                           return const Center(child: Text("No messages found."));
                         }else{
+                          controller.markAsSeen();
                           final messages = snapshot.data!.docs;
                           return ListView.builder(
                             itemCount: messages.length,
@@ -94,8 +109,7 @@ class SingleChatPage extends StatelessWidget {
                                 isShowTick: message["senderId"]==controller.currentUser!.uid,
                                 messageBgColor: message['senderId'] ==
                                     controller.currentUser!.uid
-                                    ? senderMessageColor
-                                    : messageColor,
+                                    ? messageColor: senderMessageColor,
                                 onLongPress: () {
                                   // Handle long press on message
                                 },

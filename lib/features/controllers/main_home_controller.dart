@@ -41,6 +41,13 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .snapshots();
   }
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getotheruserdata(userid) {
+    print("other"+userid);
+    return FirebaseFirestore.instance
+        .collection("users")
+        .doc(userid)
+        .snapshots();
+  }
 
 
   @override
